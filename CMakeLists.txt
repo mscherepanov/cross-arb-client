@@ -41,6 +41,7 @@ else()
     else()
         add_executable(cross-arb-client
           ${PROJECT_SOURCES}
+          src/core/models/ticker.h
         )
     endif()
 
