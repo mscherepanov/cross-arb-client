@@ -81,12 +81,18 @@ void TickersViewModel::updateCurrentTime()
 
 void TickersViewModel::onTickersUpdated(const QList<Ticker> &tickers)
 {
+    QList<Ticker> sortedTickers = tickers;
+
+    std::sort(sortedTickers.begin(), sortedTickers.end(), [](const Ticker &a, const Ticker &b) {
+        return a.symbol.toUpper() < b.symbol.toUpper();
+    });
+
     beginResetModel();
-    m_tickers = tickers;
+    m_tickers = sortedTickers;
     endResetModel();
 
     // Обновление названия биржи
-    QString newExchange = !tickers.isEmpty() ? tickers.first().exchange : "";
+    QString newExchange = !m_tickers.isEmpty() ? m_tickers.first().exchange : "";
     if (newExchange != m_exchangeName) {
         m_exchangeName = newExchange;
         emit exchangeNameChanged();
