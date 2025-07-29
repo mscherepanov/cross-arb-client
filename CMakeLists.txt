@@ -42,6 +42,7 @@ else()
         add_executable(cross-arb-client
           ${PROJECT_SOURCES}
           src/core/models/ticker.h
+          src/data/http/tickersfetcher.h src/data/http/tickersfetcher.cpp
         )
     endif()
 
