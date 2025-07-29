@@ -12,10 +12,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick LinguistTools)
 
-set(TS_FILES cross-arb-client_ru_RU.ts)
+set(TS_FILES src/translations/cross-arb-client_ru_RU.ts)
 
 set(PROJECT_SOURCES
-        main.cpp
+        src/app/main.cpp
         qml.qrc
         ${TS_FILES}
 )
@@ -41,6 +41,9 @@ else()
     else()
         add_executable(cross-arb-client
           ${PROJECT_SOURCES}
+          src/core/models/ticker.h
+          src/data/http/tickersfetcher.h src/data/http/tickersfetcher.cpp
+          src/presentation/viewmodels/tickersviewmodel.h src/presentation/viewmodels/tickersviewmodel.cpp
         )
     endif()
 
