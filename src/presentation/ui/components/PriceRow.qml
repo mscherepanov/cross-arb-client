@@ -1,9 +1,10 @@
 import QtQuick 2.12
+import QtQuick.Layouts 1.12
 
 Rectangle {
     id: rowRect
-    width: parent.width
     height: 40
+    width: parent.width
     color: hovered ? "#2a2a2a" : (index % 2 === 0 ? "#181818" : "#202020")
     border.color: "#2a2a2a"
     border.width: 1
@@ -17,19 +18,18 @@ Rectangle {
         onExited: rowRect.hovered = false
     }
 
-    Row {
+    RowLayout {
         anchors.fill: parent
         anchors.margins: 8
         spacing: 16
 
+        // Символ
         Text {
-            width: 150
             text: {
-                if (!symbol)
-                    return ""
-                var s = symbol.toUpperCase()
-                return s.replace(/(.*)(USDT)$/, "$1/$2")
+                if (!symbol) return ""
+                return symbol.toUpperCase().replace(/(.*)(USDT)$/, "$1/$2")
             }
+            Layout.preferredWidth: 150
             color: "#ffffff"
             font.family: "Monospace"
             font.pointSize: 12
@@ -37,9 +37,10 @@ Rectangle {
             verticalAlignment: Text.AlignVCenter
         }
 
+        // Цены и объёмы
         Text {
-            width: 150
             text: bidPrice || ""
+            Layout.preferredWidth: 150
             color: "#00ff7f"
             font.family: "Monospace"
             font.pointSize: 12
@@ -48,8 +49,8 @@ Rectangle {
         }
 
         Text {
-            width: 150
             text: bidQty || ""
+            Layout.preferredWidth: 150
             color: "#00ff7f"
             font.family: "Monospace"
             font.pointSize: 12
@@ -58,8 +59,8 @@ Rectangle {
         }
 
         Text {
-            width: 150
             text: askPrice || ""
+            Layout.preferredWidth: 150
             color: "#ff5555"
             font.family: "Monospace"
             font.pointSize: 12
@@ -68,8 +69,8 @@ Rectangle {
         }
 
         Text {
-            width: 150
             text: askQty || ""
+            Layout.preferredWidth: 150
             color: "#ff5555"
             font.family: "Monospace"
             font.pointSize: 12

@@ -8,12 +8,14 @@ import "components"
 Window {
     id: root
     visible: true
-    width: 900
-    height: 310
+    width: 1100
+    height: 500
+    minimumWidth: 800
+    minimumHeight: 400
     title: "Arbitrage Command Center"
     color: "#121212"
 
-    // Дата и время
+    // Шапка: время
     Text {
         text: tickersModel.currentTime
         anchors.top: parent.top
@@ -27,10 +29,10 @@ Window {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 10
         anchors.margins: 20
+        spacing: 10
 
-        // Статус соединения
+        // Статус
         Text {
             text: "Status: " + tickersModel.statusText
             color: tickersModel.statusText === "Connected" ? "#00FF7F" : "#FF5555"
@@ -48,15 +50,20 @@ Window {
         }
 
         // Заголовок таблицы
-        PriceHeader {}
+        PriceHeader {
+            Layout.fillWidth: true
+        }
 
-        // Список котировок
+        // Таблица тикеров
         ListView {
             id: tableView
             Layout.fillWidth: true
             Layout.fillHeight: true
+            clip: true
             model: tickersModel
-            delegate: PriceRow {}
+            delegate: PriceRow {
+                width: tableView.width
+            }
         }
     }
 }
