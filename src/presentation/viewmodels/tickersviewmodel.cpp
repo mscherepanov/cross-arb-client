@@ -3,9 +3,15 @@
 TickersViewModel::TickersViewModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_fetcher(new TickersFetcher(this))
+    , m_clockTimer(new QTimer(this))
+
 {
     connect(m_fetcher, &TickersFetcher::tickersUpdated, this, &TickersViewModel::onTickersUpdated);
     m_fetcher->start();
+
+    connect(m_clockTimer, &QTimer::timeout, this, &TickersViewModel::updateCurrentTime);
+    m_clockTimer->start(1000); // раз в секунду
+    updateCurrentTime();
 }
 
 int TickersViewModel::rowCount(const QModelIndex &parent) const
@@ -49,9 +55,46 @@ QHash<int, QByteArray> TickersViewModel::roleNames() const
             {AskQtyRole, "askQty"}};
 }
 
+QString TickersViewModel::statusText() const
+{
+    return m_statusText;
+}
+
+QString TickersViewModel::currentTime() const
+{
+    return m_currentTime;
+}
+
+QString TickersViewModel::exchangeName() const
+{
+    return m_exchangeName;
+}
+
+void TickersViewModel::updateCurrentTime()
+{
+    QString now = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss");
+    if (now != m_currentTime) {
+        m_currentTime = now;
+        emit currentTimeChanged();
+    }
+}
+
 void TickersViewModel::onTickersUpdated(const QList<Ticker> &tickers)
 {
     beginResetModel();
     m_tickers = tickers;
     endResetModel();
+
+    // Обновление названия биржи
+    QString newExchange = !tickers.isEmpty() ? tickers.first().exchange : "";
+    if (newExchange != m_exchangeName) {
+        m_exchangeName = newExchange;
+        emit exchangeNameChanged();
+    }
+
+    // Обновление статуса соединения
+    if (m_statusText != "Connected") {
+        m_statusText = "Connected";
+        emit statusTextChanged();
+    }
 }
