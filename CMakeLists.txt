@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick LinguistTools)
 
-set(TS_FILES cross-arb-client_ru_RU.ts)
+set(TS_FILES src/translations/cross-arb-client_ru_RU.ts)
 
 set(PROJECT_SOURCES
         src/app/main.cpp
