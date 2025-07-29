@@ -9,6 +9,20 @@ TickersViewModel::TickersViewModel(QObject *parent)
     connect(m_fetcher, &TickersFetcher::tickersUpdated, this, &TickersViewModel::onTickersUpdated);
     m_fetcher->start();
 
+    connect(m_fetcher, &TickersFetcher::fetchFailed, this, [this](const QString &reason) {
+        if (m_statusText != "Disconnected") {
+            m_statusText = "Disconnected";
+            emit statusTextChanged();
+        }
+    });
+
+    connect(m_fetcher, &TickersFetcher::loadingStarted, this, [this]() {
+        if (m_statusText != "Loading...") {
+            m_statusText = "Loading...";
+            emit statusTextChanged();
+        }
+    });
+
     connect(m_clockTimer, &QTimer::timeout, this, &TickersViewModel::updateCurrentTime);
     m_clockTimer->start(1000); // раз в секунду
     updateCurrentTime();

@@ -24,6 +24,7 @@ void TickersFetcher::start()
 
 void TickersFetcher::fetch()
 {
+    emit loadingStarted(); // перед отправкой
     QUrl url("http://localhost:8080/tickers");
     QNetworkRequest request(url);
     m_networkManager->get(request);
@@ -50,8 +51,11 @@ void TickersFetcher::onReplyFinished(QNetworkReply *reply)
                 result.append(t);
             }
         }
+
+        emit tickersUpdated(result);
+    } else {
+        emit fetchFailed(reply->errorString());
     }
 
-    emit tickersUpdated(result);
     reply->deleteLater();
 }

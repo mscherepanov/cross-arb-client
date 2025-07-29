@@ -20,6 +20,8 @@ public:
 signals:
     /// Вызывается при успешной загрузке и разборе тикеров
     void tickersUpdated(const QList<Ticker> &tickers);
+    void fetchFailed(const QString &reason);
+    void loadingStarted();
 
 private slots:
     void fetch();
