@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("tickersModel", &tickersModel);
 
     // Загрузка главного QML-файла
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    const QUrl url(QStringLiteral("qrc:/src/presentation/ui/main.qml"));
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreated,
