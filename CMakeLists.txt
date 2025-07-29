@@ -15,7 +15,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick LinguistTools)
 set(TS_FILES cross-arb-client_ru_RU.ts)
 
 set(PROJECT_SOURCES
-        main.cpp
+        src/app/main.cpp
         qml.qrc
         ${TS_FILES}
 )
