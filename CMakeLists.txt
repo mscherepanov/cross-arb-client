@@ -43,6 +43,7 @@ else()
           ${PROJECT_SOURCES}
           src/core/models/ticker.h
           src/data/http/tickersfetcher.h src/data/http/tickersfetcher.cpp
+          src/presentation/viewmodels/tickersviewmodel.h src/presentation/viewmodels/tickersviewmodel.cpp
         )
     endif()
 
