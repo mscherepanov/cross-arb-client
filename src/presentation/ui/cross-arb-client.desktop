@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Arbitrage Command Center
+Exec=cross-arb-client
+Icon=cross-arb-client
+Categories=Finance;Utility;
