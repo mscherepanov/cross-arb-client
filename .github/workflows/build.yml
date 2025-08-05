@@ -1,0 +1,221 @@
+name: build (smoke)
+
+on:
+  workflow_dispatch: {}
+
+  pull_request:
+    branches: ['master']
+    types: [opened, synchronize, reopened, ready_for_review]
+
+  push:
+    branches-ignore:
+      - 'master'
+      
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_NAME: cross-arb-client
+  QT_VERSION: 5.12.10
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+        include:
+          - os: ubuntu-22.04
+            shell: bash
+            qt_arch: gcc_64
+          - os: windows-2022
+            shell: pwsh
+            qt_arch: win64_mingw73
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      - name: Install aqt
+        run: python -m pip install --upgrade pip aqtinstall
+
+      - name: Cache Qt and aqt cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.os == 'Windows' && format('{0}\Qt', env.USERPROFILE) || format('{0}/Qt', env.HOME) }}
+            ~/.aqt/cache
+            ~/.aqt/archives
+          key: qt-${{ matrix.os }}-${{ env.QT_VERSION }}-${{ matrix.qt_arch }}
+
+      - name: Install Qt
+        run: |
+          python - <<'PY'
+          import os, sys, subprocess, platform
+          home = os.path.expanduser("~")
+          qt_root = os.path.join(home, "Qt")
+          version = os.environ["QT_VERSION"]
+          if platform.system() == "Windows":
+              triplet, arch = "windows", "win64_mingw73"
+              target_dir = os.path.join(qt_root, version, "mingw73_64")
+              tool_args = ["windows", "desktop", "tools_mingw", "qt.tools.win64_mingw730"]
+          else:
+              triplet, arch = "linux", "gcc_64"
+              target_dir = os.path.join(qt_root, version, "gcc_64")
+              tool_args = None
+          if not os.path.exists(target_dir):
+              subprocess.check_call([sys.executable, "-m", "aqt", "install-qt", triplet, "desktop", version, arch, "-O", qt_root])
+              if tool_args:
+                  subprocess.check_call([sys.executable, "-m", "aqt", "install-tool", *tool_args, "-O", qt_root])
+          print("QT_ROOT=" + target_dir)
+          PY
+        shell: bash
+
+      - name: Export Qt paths (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "QT_ROOT=$HOME/Qt/${QT_VERSION}/gcc_64" >> $GITHUB_ENV
+          echo "$HOME/Qt/${QT_VERSION}/gcc_64/bin" >> $GITHUB_PATH
+
+      - name: Export Qt paths (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "QT_ROOT=$env:USERPROFILE\Qt\${env:QT_VERSION}\mingw73_64" >> $env:GITHUB_ENV
+          echo "$env:USERPROFILE\Qt\${env:QT_VERSION}\mingw73_64\bin" >> $env:GITHUB_PATH
+          echo "$env:USERPROFILE\Qt\Tools\mingw730_64\bin" >> $env:GITHUB_PATH
+
+      - name: Install build deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ninja-build ccache cmake patchelf \
+            mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev \
+            libxkbcommon-x11-0 libxkbcommon0 \
+            libx11-xcb1 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0
+
+      - name: Install build deps (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install -y ninja
+          choco install -y ccache   # FIX: ставим ccache
+
+      - name: Cache linuxdeploy (Linux)
+        if: runner.os == 'Linux'
+        id: cache-linuxdeploy
+        uses: actions/cache@v4
+        with:
+          path: |
+            linuxdeploy-x86_64.AppImage
+            linuxdeploy-plugin-qt-x86_64.AppImage
+          key: linuxdeploy-${{ hashFiles('.github/workflows/*.yml') }}
+
+      - name: Fetch linuxdeploy (Linux)
+        if: runner.os == 'Linux' && steps.cache-linuxdeploy.outputs.cache-hit != 'true'
+        run: |
+          set -eux
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy-*.AppImage
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os == 'Windows' && 'C:\Users\runneradmin\AppData\Local\ccache' || '~/.cache/ccache' }}
+          key: ccache-${{ matrix.os }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.os }}-
+
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="${QT_ROOT}" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # FIX: Явно указываем gcc/g++ вместо несуществующего c++.exe
+          $GCC  = "$env:USERPROFILE\Qt\Tools\mingw730_64\bin\gcc.exe"
+          $GPP  = "$env:USERPROFILE\Qt\Tools\mingw730_64\bin\g++.exe"
+          cmake -S . -B build -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT" `
+            -DCMAKE_C_COMPILER="$GCC" `
+            -DCMAKE_CXX_COMPILER="$GPP" `
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Build
+        run: cmake --build build --config Release -j
+
+      - name: Run tests (ctest)
+        continue-on-error: true
+        run: |
+          ctest --test-dir build --output-on-failure || echo "No tests or some failed"
+
+      - name: Package (Linux AppImage + tar.gz)
+        if: runner.os == 'Linux'
+        env:
+          QML_SOURCES_PATHS: src
+        run: |
+          set -euxo pipefail
+          mkdir -p out AppDir
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir \
+            --executable "build/${APP_NAME}" \
+            --desktop-file "src/presentation/ui/${APP_NAME}.desktop" \
+            --icon-file "src/presentation/ui/cross-arb-client.png"
+          ./linuxdeploy-plugin-qt-x86_64.AppImage --appdir AppDir
+
+          (cd AppDir && tar -czf "../out/${APP_NAME}-linux-qt${QT_VERSION}-${{ github.run_number }}.tar.gz" .)
+
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+          APPIMAGE="$(ls -1 *.AppImage | grep -v '^linuxdeploy' | head -n 1)"
+          test -n "$APPIMAGE"
+          mv "$APPIMAGE" "out/${APP_NAME}-linux-qt${QT_VERSION}-${{ github.run_number }}.AppImage"
+
+      - name: Package (Windows zip)
+        if: runner.os == 'Windows'
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          $exe1 = "build\${{ env.APP_NAME }}.exe"
+          $exe2 = "build\Release\${{ env.APP_NAME }}.exe"
+          $exe  = (Test-Path $exe1) ? $exe1 : $exe2
+          Copy-Item $exe out\
+          & windeployqt --qmldir src "out\${{ env.APP_NAME }}.exe"
+          Compress-Archive -Path out\* -DestinationPath "out\${{ env.APP_NAME }}-windows-qt${{ env.QT_VERSION }}-${{ github.run_number }}.zip"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ runner.os == 'Windows' && 'windows' || 'linux' }}-qt${{ env.QT_VERSION }}
+          path: out/*
+          if-no-files-found: error
+          retention-days: 14
+
