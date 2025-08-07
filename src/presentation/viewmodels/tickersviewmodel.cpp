@@ -84,6 +84,17 @@ QString TickersViewModel::exchangeName() const
     return m_exchangeName;
 }
 
+QString TickersViewModel::filterExchange() const {
+    return m_filterExchange;
+}
+
+void TickersViewModel::setFilterExchange(const QString &exchange) {
+    if (exchange != m_filterExchange) {
+        m_filterExchange = exchange;
+        emit filterExchangeChanged();
+    }
+}
+
 void TickersViewModel::updateCurrentTime()
 {
     QString now = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss");

@@ -14,6 +14,7 @@ class TickersViewModel : public QAbstractListModel
     Q_PROPERTY(QString statusText READ statusText NOTIFY statusTextChanged)
     Q_PROPERTY(QString currentTime READ currentTime NOTIFY currentTimeChanged)
     Q_PROPERTY(QString exchangeName READ exchangeName NOTIFY exchangeNameChanged)
+    Q_PROPERTY(QString filterExchange READ filterExchange WRITE setFilterExchange NOTIFY filterExchangeChanged)
 public:
     enum Roles {
         SymbolRole = Qt::UserRole + 1,
@@ -33,6 +34,8 @@ public:
     QString statusText() const;
     QString currentTime() const;
     QString exchangeName() const;
+    QString filterExchange() const;
+    void setFilterExchange(const QString &exchange);
 
 public slots:
     void updateCurrentTime();
@@ -44,6 +47,7 @@ signals:
     void statusTextChanged();
     void currentTimeChanged();
     void exchangeNameChanged();
+    void filterExchangeChanged();
 
 private:
     QList<Ticker> m_tickers;
@@ -52,6 +56,7 @@ private:
     QString m_statusText = "Loading...";
     QString m_currentTime;
     QString m_exchangeName;
+    QString m_filterExchange;
 
     QTimer *m_clockTimer = nullptr;
 };
