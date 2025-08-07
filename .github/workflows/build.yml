@@ -7,10 +7,6 @@ on:
     branches: ['master']
     types: [opened, synchronize, reopened, ready_for_review]
 
-  push:
-    branches-ignore:
-      - 'master'
-      
 permissions:
   contents: read
 
