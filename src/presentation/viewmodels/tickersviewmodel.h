@@ -15,6 +15,7 @@ class TickersViewModel : public QAbstractListModel
     Q_PROPERTY(QString currentTime READ currentTime NOTIFY currentTimeChanged)
     Q_PROPERTY(QString exchangeName READ exchangeName NOTIFY exchangeNameChanged)
     Q_PROPERTY(QString filterExchange READ filterExchange WRITE setFilterExchange NOTIFY filterExchangeChanged)
+    Q_PROPERTY(QStringList availableExchanges READ availableExchanges NOTIFY availableExchangesChanged)
 public:
     enum Roles {
         SymbolRole = Qt::UserRole + 1,
@@ -36,6 +37,7 @@ public:
     QString exchangeName() const;
     QString filterExchange() const;
     void setFilterExchange(const QString &exchange);
+    QStringList availableExchanges() const;
 
 public slots:
     void updateCurrentTime();
@@ -48,6 +50,7 @@ signals:
     void currentTimeChanged();
     void exchangeNameChanged();
     void filterExchangeChanged();
+    void availableExchangesChanged();
 
 private:
     QList<Ticker> m_tickers;
@@ -57,6 +60,7 @@ private:
     QString m_currentTime;
     QString m_exchangeName;
     QString m_filterExchange;
+    QStringList m_availableExchanges;
 
     QTimer *m_clockTimer = nullptr;
 };

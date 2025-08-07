@@ -88,6 +88,10 @@ QString TickersViewModel::filterExchange() const {
     return m_filterExchange;
 }
 
+QStringList TickersViewModel::availableExchanges() const {
+    return m_availableExchanges;
+}
+
 void TickersViewModel::setFilterExchange(const QString &exchange) {
     if (exchange != m_filterExchange) {
         m_filterExchange = exchange;
@@ -111,6 +115,18 @@ void TickersViewModel::onTickersUpdated(const QList<Ticker> &tickers)
     std::sort(sortedTickers.begin(), sortedTickers.end(), [](const Ticker &a, const Ticker &b) {
         return a.symbol.toUpper() < b.symbol.toUpper();
     });
+
+    // Сбор всех уникальных бирж
+    QStringList exchanges;
+    for (const auto &t : tickers) {
+        if (!exchanges.contains(t.exchange))
+            exchanges.append(t.exchange);
+    }
+
+    if (exchanges != m_availableExchanges) {
+        m_availableExchanges = exchanges;
+        emit availableExchangesChanged();
+    }
 
     if (!m_filterExchange.isEmpty()) {
         sortedTickers.erase(
