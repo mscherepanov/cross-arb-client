@@ -62,11 +62,11 @@ QVariant TickersViewModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> TickersViewModel::roleNames() const
 {
     return {{SymbolRole, "symbol"},
-            {ExchangeRole, "exchange"},
-            {BidPriceRole, "bidPrice"},
-            {BidQtyRole, "bidQty"},
-            {AskPriceRole, "askPrice"},
-            {AskQtyRole, "askQty"}};
+        {ExchangeRole, "exchange"},
+        {BidPriceRole, "bidPrice"},
+        {BidQtyRole, "bidQty"},
+        {AskPriceRole, "askPrice"},
+        {AskQtyRole, "askQty"}};
 }
 
 QString TickersViewModel::statusText() const
@@ -111,6 +111,15 @@ void TickersViewModel::onTickersUpdated(const QList<Ticker> &tickers)
     std::sort(sortedTickers.begin(), sortedTickers.end(), [](const Ticker &a, const Ticker &b) {
         return a.symbol.toUpper() < b.symbol.toUpper();
     });
+
+    if (!m_filterExchange.isEmpty()) {
+        sortedTickers.erase(
+                    std::remove_if(sortedTickers.begin(), sortedTickers.end(),
+                                   [this](const Ticker &t) {
+            return t.exchange != m_filterExchange;
+        }),
+                    sortedTickers.end());
+    }
 
     beginResetModel();
     m_tickers = sortedTickers;
