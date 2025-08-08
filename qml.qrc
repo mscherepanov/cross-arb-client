@@ -3,5 +3,6 @@
         <file>src/presentation/ui/main.qml</file>
         <file>src/presentation/ui/components/PriceRow.qml</file>
         <file>src/presentation/ui/components/PriceHeader.qml</file>
+        <file>src/presentation/ui/components/ExchangeSelector.qml</file>
     </qresource>
 </RCC>

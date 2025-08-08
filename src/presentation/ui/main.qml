@@ -49,6 +49,14 @@ Window {
             font.pointSize: 12
         }
 
+        ExchangeSelector {
+            model: tickersModel.availableExchanges
+            current: tickersModel.filterExchange
+            onSelect: function(value) {
+                tickersModel.filterExchange = value
+            }
+        }
+
         // Заголовок таблицы
         PriceHeader {
             Layout.fillWidth: true
