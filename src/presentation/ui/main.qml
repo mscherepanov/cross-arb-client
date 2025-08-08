@@ -43,7 +43,14 @@ Window {
 
         // Название биржи
         Text {
-            text: tickersModel.exchangeName !== "" ? "Exchange: " + tickersModel.exchangeName : ""
+            text: {
+                if (tickersModel.filterExchange === "")
+                    return "Exchange: All"
+                else if (tickersModel.exchangeName !== "")
+                    return "Exchange: " + tickersModel.exchangeName
+                else
+                    return ""
+            }
             color: "#aaaaaa"
             font.family: "Monospace"
             font.pointSize: 12
